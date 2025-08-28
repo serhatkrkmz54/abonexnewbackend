@@ -8,7 +8,7 @@ import lombok.Data;
 public class LoginRequest {
 
     @NotBlank(message = "Email girişi zorunludur")
-    @Email(message = "Email standartlarına uygun giriniz")
+    @Email(message = "Email kısmını standartlara uygun giriniz")
     private String email;
 
     @NotBlank(message = "Parola girişi zorunludur")
