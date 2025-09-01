@@ -1,6 +1,6 @@
 package com.abonex.abonexbackend.entity.enums;
 
-public enum PaymentFrequency {
+public enum BillingCycle {
     MONTHLY,
     YEARLY
 }
