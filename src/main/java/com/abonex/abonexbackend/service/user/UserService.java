@@ -1,6 +1,6 @@
 package com.abonex.abonexbackend.service.user;
 
-import com.abonex.abonexbackend.dto.auth.UserProfileUpdateRequest;
+import com.abonex.abonexbackend.dto.auth.request.UserProfileUpdateRequest;
 import com.abonex.abonexbackend.entity.User;
 import com.abonex.abonexbackend.repository.UserRepository;
 import com.abonex.abonexbackend.service.auth.AuthService;
@@ -35,12 +35,14 @@ public class UserService {
             if (userWithNewEmail.isPresent()) {
                 throw new ResponseStatusException(HttpStatus.CONFLICT,"Email adresi başka bir hesapta kullanılmaktadır!");
             }
+            userToUpdate.setEmail(request.getEmail());
         }
         if (!userToUpdate.getPhoneNumber().equals(request.getPhoneNumber())) {
             Optional<User> userWithNewPhone = userRepository.findByPhoneNumber(request.getPhoneNumber());
             if (userWithNewPhone.isPresent()) {
                 throw new ResponseStatusException(HttpStatus.CONFLICT, "Telefon numarası başka bir hesapta kayıtlıdır!");
             }
+            userToUpdate.setPhoneNumber(request.getPhoneNumber());
         }
 
         if (request.getDateOfBirth() != null) {

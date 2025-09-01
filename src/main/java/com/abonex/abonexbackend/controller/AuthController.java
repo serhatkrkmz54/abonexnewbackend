@@ -1,9 +1,9 @@
 package com.abonex.abonexbackend.controller;
 
-import com.abonex.abonexbackend.dto.AuthResponse;
-import com.abonex.abonexbackend.dto.LoginRequest;
-import com.abonex.abonexbackend.dto.auth.ReactivateRequest;
-import com.abonex.abonexbackend.dto.auth.RegisterRequest;
+import com.abonex.abonexbackend.dto.auth.response.AuthResponse;
+import com.abonex.abonexbackend.dto.auth.request.LoginRequest;
+import com.abonex.abonexbackend.dto.auth.request.ReactivateRequest;
+import com.abonex.abonexbackend.dto.auth.request.RegisterRequest;
 import com.abonex.abonexbackend.service.auth.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

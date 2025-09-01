@@ -1,8 +1,7 @@
 package com.abonex.abonexbackend.controller;
 
-import com.abonex.abonexbackend.dto.auth.UserProfileUpdateRequest;
+import com.abonex.abonexbackend.dto.auth.request.UserProfileUpdateRequest;
 import com.abonex.abonexbackend.entity.User;
-import com.abonex.abonexbackend.service.auth.AuthService;
 import com.abonex.abonexbackend.service.user.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

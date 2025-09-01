@@ -1,4 +1,4 @@
-package com.abonex.abonexbackend.dto;
+package com.abonex.abonexbackend.dto.auth.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
