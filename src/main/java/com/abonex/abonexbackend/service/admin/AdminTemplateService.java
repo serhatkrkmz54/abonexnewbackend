@@ -38,6 +38,8 @@ public class AdminTemplateService {
                 .currency(request.getCurrency())
                 .billingCycle(request.getBillingCycle())
                 .build();
+
+        template.getPlans().add(plan);
         return planRepository.save(plan);
     }
 }

@@ -2,6 +2,7 @@ package com.abonex.abonexbackend.controller;
 
 import com.abonex.abonexbackend.dto.admin.request.CreatePlanRequest;
 import com.abonex.abonexbackend.dto.admin.request.CreateTemplateRequest;
+import com.abonex.abonexbackend.dto.admin.response.PlanResponse;
 import com.abonex.abonexbackend.entity.SubscriptionPlan;
 import com.abonex.abonexbackend.entity.SubscriptionTemplate;
 import com.abonex.abonexbackend.service.admin.AdminTemplateService;
@@ -26,9 +27,11 @@ public class AdminTemplateController {
 
     @PostMapping("/{templateId}/plans")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<SubscriptionPlan> createPlanForTemplate(
+    public ResponseEntity<PlanResponse> createPlanForTemplate(
             @PathVariable Long templateId,
             @Valid @RequestBody CreatePlanRequest request) {
-        return new ResponseEntity<>(adminTemplateService.createPlanForTemplate(templateId, request), HttpStatus.CREATED);
+        SubscriptionPlan createdPlanEntity = adminTemplateService.createPlanForTemplate(templateId, request);
+        PlanResponse responseDto = PlanResponse.fromEntity(createdPlanEntity);
+        return new ResponseEntity<>(responseDto, HttpStatus.CREATED);
     }
 }

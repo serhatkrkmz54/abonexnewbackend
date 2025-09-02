@@ -11,7 +11,7 @@ import java.math.BigDecimal;
 
 @Data
 public class CreatePlanRequest {
-    @NotBlank
+    @NotBlank(message = "Plan ismi boş olamaz")
     private String planName;
     @NotNull @Positive
     private BigDecimal amount;

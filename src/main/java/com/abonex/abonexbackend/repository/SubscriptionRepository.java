@@ -10,4 +10,6 @@ import java.util.List;
 public interface SubscriptionRepository extends JpaRepository<Subscription, Long> {
     List<Subscription> findByUser(User user);
     List<Subscription> findAllByIsActiveTrueAndNextPaymentDate(LocalDate date);
+    List<Subscription> findByUserAndIsActiveTrue(User user);
+    List<Subscription> findByUserAndIsActiveFalse(User user);
 }

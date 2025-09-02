@@ -10,6 +10,7 @@ public class CreateSubscriptionFromPlanRequest {
     @NotNull private Long planId;
     @NotNull
     private LocalDate startDate;
+    private LocalDate endDate;
     private String cardName;
     private String cardLastFourDigits;
     private int notificationDaysBefore = 5;

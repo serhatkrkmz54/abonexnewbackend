@@ -17,7 +17,7 @@ public class SubscriptionTemplateController {
 
     private final SubscriptionTemplateService templateService;
 
-    @GetMapping
+    @GetMapping("/get-all-templates")
     public ResponseEntity<List<TemplateWithPlansResponse>> getAllTemplatesWithPlans() {
         List<TemplateWithPlansResponse> templates = templateService.getAllTemplatesWithPlans();
         return ResponseEntity.ok(templates);

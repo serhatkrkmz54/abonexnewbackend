@@ -1,5 +1,6 @@
 package com.abonex.abonexbackend.service.jwt;
 
+import com.abonex.abonexbackend.entity.User;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -36,6 +37,9 @@ public class JwtService {
     }
 
     public String generateToken(Map<String, Object> extraClaims, UserDetails userDetails) {
+        User ourUser = (User) userDetails;
+        extraClaims.put("role", ourUser.getRole().name());
+
         return Jwts.builder()
                 .claims(extraClaims)
                 .subject(userDetails.getUsername())
@@ -49,7 +53,7 @@ public class JwtService {
         return (username.equals(userDetails.getUsername()));
     }
 
-    private Claims extractAllClaims(String token) {
+    public Claims extractAllClaims(String token) {
         SecretKey key = (SecretKey) getSignInKey();
         return Jwts.parser()
                 .verifyWith(key)
