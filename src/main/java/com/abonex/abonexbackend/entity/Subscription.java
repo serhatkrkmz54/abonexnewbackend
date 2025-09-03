@@ -51,7 +51,7 @@ public class Subscription {
     @Column(name = "end_date")
     private LocalDate endDate;
 
-    @Column(name = "next_payment_date", nullable = false)
+    @Column(name = "next_payment_date")
     private LocalDate nextPaymentDate;
 
     @Column(name = "card_name")

@@ -26,7 +26,7 @@ public class UserController {
         return ResponseEntity.ok(userService.updateUserProfile(request));
     }
 
-    @DeleteMapping("/deactive-account")
+    @PatchMapping("/deactive-account")
     public ResponseEntity<Void> deactiveMyAccount() {
         userService.deactiveAccount();
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
