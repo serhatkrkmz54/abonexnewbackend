@@ -17,6 +17,7 @@ import java.time.LocalDate;
 @AllArgsConstructor
 public class SubscriptionResponse {
     private Long id;
+    private String logoUrl;
     private String subscriptionName;
     private BigDecimal amount;
     private Currency currency;
@@ -32,6 +33,7 @@ public class SubscriptionResponse {
     public static SubscriptionResponse fromEntity(Subscription subscription) {
         return SubscriptionResponse.builder()
                 .id(subscription.getId())
+                .logoUrl(subscription.getLogoUrl())
                 .subscriptionName(subscription.getSubscriptionName())
                 .amount(subscription.getAmount())
                 .currency(subscription.getCurrency())

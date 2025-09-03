@@ -44,4 +44,6 @@ public class CreateSubscriptionRequest {
     @Builder.Default
     private int notificationDaysBefore = 5;
 
+    private boolean firstPaymentMade;
+
 }

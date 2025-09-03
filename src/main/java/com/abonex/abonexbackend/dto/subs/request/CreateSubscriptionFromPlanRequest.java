@@ -14,4 +14,5 @@ public class CreateSubscriptionFromPlanRequest {
     private String cardName;
     private String cardLastFourDigits;
     private int notificationDaysBefore = 5;
+    private boolean firstPaymentMade;
 }

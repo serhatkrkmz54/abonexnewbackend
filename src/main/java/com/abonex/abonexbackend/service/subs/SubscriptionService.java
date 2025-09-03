@@ -2,7 +2,7 @@ package com.abonex.abonexbackend.service.subs;
 
 import com.abonex.abonexbackend.dto.subs.request.CreateSubscriptionFromPlanRequest;
 import com.abonex.abonexbackend.dto.subs.request.CreateSubscriptionRequest;
-import com.abonex.abonexbackend.dto.subs.response.MonthlySpendResponse;
+import com.abonex.abonexbackend.dto.subs.response.*;
 import com.abonex.abonexbackend.entity.PaymentHistory;
 import com.abonex.abonexbackend.entity.Subscription;
 import com.abonex.abonexbackend.entity.SubscriptionPlan;
@@ -24,7 +24,9 @@ import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.Year;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -65,6 +67,65 @@ public class SubscriptionService {
     }
 
     @Transactional
+    public HomeSubscriptionResponse getCategorizedHomeSubscriptions() {
+        User user = authService.getAuthenticatedUser();
+        List<Subscription> allActiveSubs = subscriptionRepository.findByUserAndIsActiveTrue(user);
+        LocalDate today = LocalDate.now();
+        LocalDate upcomingLimit = today.plusDays(7);
+
+        List<SubscriptionResponse> overdue = new ArrayList<>();
+        List<SubscriptionResponse> upcoming = new ArrayList<>();
+        List<SubscriptionResponse> expired = new ArrayList<>();
+        List<SubscriptionResponse> others = new ArrayList<>();
+
+        for (Subscription sub : allActiveSubs) {
+            if (sub.getNextPaymentDate() != null && sub.getNextPaymentDate().isBefore(today)) {
+                overdue.add(SubscriptionResponse.fromEntity(sub));
+            }
+            else if (sub.getEndDate() != null && sub.getEndDate().isBefore(today)) {
+                expired.add(SubscriptionResponse.fromEntity(sub));
+            }
+            else if (sub.getNextPaymentDate() != null && sub.getNextPaymentDate().isBefore(upcomingLimit)) {
+                upcoming.add(SubscriptionResponse.fromEntity(sub));
+            }
+            else {
+                others.add(SubscriptionResponse.fromEntity(sub));
+            }
+        }
+
+        return HomeSubscriptionResponse.builder()
+                .overdueSubscriptions(overdue)
+                .upcomingPayments(upcoming)
+                .expiredSubscriptions(expired)
+                .otherSubscriptions(others)
+                .build();
+    }
+
+    @Transactional(readOnly = true)
+    public SubscriptionDetailsResponse getSubscriptionDetails(Long subscriptionId) {
+        User user = authService.getAuthenticatedUser();
+
+        Subscription subscription = subscriptionRepository.findById(subscriptionId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Abonelik bulunamadı!"));
+
+        if (!subscription.getUser().getId().equals(user.getId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Bu işlem için yetkiniz yok!");
+        }
+
+        List<PaymentHistory> history = paymentHistoryRepository.findBySubscriptionOrderByPaymentDateDesc(subscription);
+
+        SubscriptionResponse subDto = SubscriptionResponse.fromEntity(subscription);
+        List<PaymentHistoryResponse> historyDto = history.stream()
+                .map(PaymentHistoryResponse::fromEntity)
+                .collect(Collectors.toList());
+
+        return SubscriptionDetailsResponse.builder()
+                .subscription(subDto)
+                .paymentHistory(historyDto)
+                .build();
+    }
+
+    @Transactional
     public Subscription createSubscription(CreateSubscriptionRequest request) {
         User user = authService.getAuthenticatedUser();
         Subscription subscription = Subscription.builder()
@@ -81,7 +142,26 @@ public class SubscriptionService {
                 .isActive(true)
                 .nextPaymentDate(request.getStartDate())
                 .build();
-        return subscriptionRepository.save(subscription);
+
+        if (request.isFirstPaymentMade()) {
+            LocalDate nextPaymentDate = (request.getBillingCycle() == BillingCycle.MONTHLY)
+                    ? request.getStartDate().plusMonths(1)
+                    : request.getStartDate().plusYears(1);
+            subscription.setNextPaymentDate(nextPaymentDate);
+
+            Subscription savedSubscription = subscriptionRepository.save(subscription);
+            PaymentHistory firstPayment = PaymentHistory.builder()
+                    .subscription(savedSubscription)
+                    .amountPaid(savedSubscription.getAmount())
+                    .paymentDate(request.getStartDate().atStartOfDay())
+                    .build();
+            paymentHistoryRepository.save(firstPayment);
+            return savedSubscription;
+
+        } else {
+            subscription.setNextPaymentDate(request.getStartDate());
+            return subscriptionRepository.save(subscription);
+        }
     }
 
     @Transactional
@@ -120,6 +200,7 @@ public class SubscriptionService {
         Subscription subscription = Subscription.builder()
                 .user(user)
                 .subscriptionName(plan.getTemplate().getName() + " - " + plan.getPlanName())
+                .logoUrl(plan.getTemplate().getLogoUrl())
                 .amount(plan.getAmount())
                 .currency(plan.getCurrency())
                 .billingCycle(plan.getBillingCycle())
@@ -132,7 +213,26 @@ public class SubscriptionService {
                 .isActive(true)
                 .build();
 
-        return subscriptionRepository.save(subscription);
+        if (request.isFirstPaymentMade()) {
+            LocalDate nextPaymentDate = (plan.getBillingCycle() == BillingCycle.MONTHLY)
+                    ? request.getStartDate().plusMonths(1)
+                    : request.getStartDate().plusYears(1);
+            subscription.setNextPaymentDate(nextPaymentDate);
+            Subscription savedSubscription = subscriptionRepository.save(subscription);
+
+            PaymentHistory firstPayment = PaymentHistory.builder()
+                    .subscription(savedSubscription)
+                    .amountPaid(savedSubscription.getAmount())
+                    .paymentDate(request.getStartDate().atStartOfDay())
+                    .build();
+            paymentHistoryRepository.save(firstPayment);
+
+            return savedSubscription;
+
+        } else {
+            subscription.setNextPaymentDate(request.getStartDate());
+            return subscriptionRepository.save(subscription);
+        }
     }
 
     public void cancelSubscription(Long subscriptionId) {

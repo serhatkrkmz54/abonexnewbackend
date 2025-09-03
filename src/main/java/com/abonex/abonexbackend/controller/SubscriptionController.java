@@ -2,9 +2,7 @@ package com.abonex.abonexbackend.controller;
 
 import com.abonex.abonexbackend.dto.subs.request.CreateSubscriptionFromPlanRequest;
 import com.abonex.abonexbackend.dto.subs.request.CreateSubscriptionRequest;
-import com.abonex.abonexbackend.dto.subs.response.MonthlySpendResponse;
-import com.abonex.abonexbackend.dto.subs.response.PaymentHistoryResponse;
-import com.abonex.abonexbackend.dto.subs.response.SubscriptionResponse;
+import com.abonex.abonexbackend.dto.subs.response.*;
 import com.abonex.abonexbackend.entity.PaymentHistory;
 import com.abonex.abonexbackend.entity.Subscription;
 import com.abonex.abonexbackend.entity.User;
@@ -38,6 +36,18 @@ public class SubscriptionController {
     @GetMapping("/monthly-cost")
     public ResponseEntity<MonthlySpendResponse> getTotalMonthlyCost() {
         MonthlySpendResponse response = subscriptionService.calculateMonthlyCostOfActiveSubscriptions();
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/categorized-home-view")
+    public ResponseEntity<HomeSubscriptionResponse> getCategorizedHomeView() {
+        HomeSubscriptionResponse response = subscriptionService.getCategorizedHomeSubscriptions();
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/subscription-detail/{id}")
+    public ResponseEntity<SubscriptionDetailsResponse> getSubscriptionDetails(@PathVariable Long id) {
+        SubscriptionDetailsResponse response = subscriptionService.getSubscriptionDetails(id);
         return ResponseEntity.ok(response);
     }
 
