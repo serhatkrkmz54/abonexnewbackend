@@ -62,4 +62,11 @@ public class UserService {
         userToDelete.setEnabled(false);
         userRepository.save(userToDelete);
     }
+
+    public void updateFcmToken(String token) {
+        User user = authService.getAuthenticatedUser();
+        user.setFcmToken(token);
+        userRepository.save(user);
+    }
+
 }

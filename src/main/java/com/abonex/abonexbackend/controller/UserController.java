@@ -1,5 +1,6 @@
 package com.abonex.abonexbackend.controller;
 
+import com.abonex.abonexbackend.dto.auth.request.UpdateFcmTokenRequest;
 import com.abonex.abonexbackend.dto.auth.request.UserProfileUpdateRequest;
 import com.abonex.abonexbackend.entity.User;
 import com.abonex.abonexbackend.service.user.UserService;
@@ -30,5 +31,11 @@ public class UserController {
     public ResponseEntity<Void> deactiveMyAccount() {
         userService.deactiveAccount();
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+    }
+
+    @PostMapping("/fcm-token")
+    public ResponseEntity<Void> updateFcmToken(@RequestBody @Valid UpdateFcmTokenRequest request) {
+        userService.updateFcmToken(request.getToken());
+        return ResponseEntity.ok().build();
     }
 }
