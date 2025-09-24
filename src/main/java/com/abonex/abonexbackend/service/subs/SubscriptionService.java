@@ -8,10 +8,12 @@ import com.abonex.abonexbackend.entity.Subscription;
 import com.abonex.abonexbackend.entity.SubscriptionPlan;
 import com.abonex.abonexbackend.entity.User;
 import com.abonex.abonexbackend.entity.enums.BillingCycle;
+import com.abonex.abonexbackend.entity.enums.NotificationType;
 import com.abonex.abonexbackend.repository.PaymentHistoryRepository;
 import com.abonex.abonexbackend.repository.SubscriptionPlanRepository;
 import com.abonex.abonexbackend.repository.SubscriptionRepository;
 import com.abonex.abonexbackend.service.auth.AuthService;
+import com.abonex.abonexbackend.service.fcm.FCMService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -26,6 +28,7 @@ import java.time.LocalDateTime;
 import java.time.Year;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -36,6 +39,7 @@ public class SubscriptionService {
     private final AuthService authService;
     private final SubscriptionPlanRepository planRepository;
     private final PaymentHistoryRepository paymentHistoryRepository;
+    private final FCMService fCMService;
 
     public List<Subscription> getUserSubscriptions(User user){
         User authenticatedUser = authService.getAuthenticatedUser();
@@ -187,6 +191,22 @@ public class SubscriptionService {
 
         subscription.setNextPaymentDate(newNextPaymentDate);
         subscriptionRepository.save(subscription);
+
+        User thisUser = subscription.getUser();
+        if (thisUser.getFcmToken() != null && !thisUser.getFcmToken().isBlank()) {
+            String title = "Ödeme Kaydedildi";
+            String body = String.format(
+                    "'%s' için %.2f %s tutarındaki ödemeniz başarıyla kaydedildi.",
+                    subscription.getSubscriptionName(),
+                    savedPayment.getAmountPaid(),
+                    subscription.getCurrency()
+            );
+            Map<String, String> data = Map.of(
+                    "notificationType", NotificationType.PAYMENT_CONFIRMED.name(),
+                    "subscriptionId", subscription.getId().toString()
+            );
+            fCMService.sendNotificationWithData(user.getFcmToken(), title, body, data);
+        }
         return savedPayment;
     }
 
@@ -247,6 +267,16 @@ public class SubscriptionService {
         subscription.setEndDate(LocalDate.now());
         subscription.setNextPaymentDate(null);
         subscriptionRepository.save(subscription);
+        User thisUser = subscription.getUser();
+        if (thisUser.getFcmToken() != null && !thisUser.getFcmToken().isBlank()) {
+            String title = "Abonelik İptal Edildi";
+            String body = String.format("'%s' aboneliğiniz başarıyla iptal edildi.", subscription.getSubscriptionName());
+            Map<String, String> data = Map.of(
+                    "notificationType", NotificationType.SUBSCRIPTION_CANCELLED.name(),
+                    "subscriptionId", subscription.getId().toString()
+            );
+            fCMService.sendNotificationWithData(user.getFcmToken(), title, body, data);
+        }
     }
 
 }

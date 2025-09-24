@@ -1,5 +1,6 @@
 package com.abonex.abonexbackend.controller;
 
+import com.abonex.abonexbackend.dto.auth.request.VerifyCodeRequest;
 import com.abonex.abonexbackend.dto.auth.response.AuthResponse;
 import com.abonex.abonexbackend.dto.auth.request.LoginRequest;
 import com.abonex.abonexbackend.dto.auth.request.ReactivateRequest;
@@ -30,9 +31,16 @@ public class AuthController {
         return ResponseEntity.ok(authService.login(request));
     }
 
-    @PostMapping("/reactivate-account")
-    public ResponseEntity<AuthResponse> reactivate(@Valid @RequestBody ReactivateRequest request) {
-        return ResponseEntity.ok(authService.reactivateAccount(request));
+
+    @PostMapping("/request-reactivation-otp")
+    public ResponseEntity<Void> requestReactivationOtp(@Valid @RequestBody ReactivateRequest request) {
+        authService.requestReactivationOtp(request);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/verify-reactivation-otp")
+    public ResponseEntity<AuthResponse> verifyReactivationOtp(@Valid @RequestBody VerifyCodeRequest request) {
+        return ResponseEntity.ok(authService.verifyReactivationOtp(request));
     }
 
 }
