@@ -4,7 +4,6 @@ import com.abonex.abonexbackend.entity.Subscription;
 import com.abonex.abonexbackend.entity.User;
 import com.abonex.abonexbackend.entity.enums.NotificationType;
 import com.abonex.abonexbackend.repository.SubscriptionRepository;
-import com.abonex.abonexbackend.service.fcm.FCMService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -20,39 +19,37 @@ import java.util.Map;
 @Slf4j
 public class NotificationScheduleService {
     private final SubscriptionRepository subscriptionRepository;
-    private final FCMService fcmService;
+    private final NotificationCreationService notificationCreationService;
 
     @Scheduled(cron = "0 0 0 * * ?")
     public void checkSubscriptionsAndNotify() {
         log.info("Zamanlayıcı çalıştı, abonelikler kontrol ediliyor...");
         List<Subscription> subscriptions = subscriptionRepository.findAllByIsActiveTrue();
         LocalDate today = LocalDate.now();
-        LocalDate upcomingLimit = today.plusDays(8);
 
         for (Subscription sub : subscriptions) {
-            User user = sub.getUser();
-            if (user.getFcmToken() == null || user.getFcmToken().isBlank()) continue;
-
             LocalDate nextPayment = sub.getNextPaymentDate();
             LocalDate endDate = sub.getEndDate();
 
-            if (endDate != null && endDate.isBefore(today)) {
-                sendNotificationFor(user, sub, NotificationType.SUBSCRIPTION_EXPIRED, 0);
+            if (endDate != null && endDate.isEqual(today)) {
+                sendCategorizedNotification(sub.getUser(), sub, NotificationType.SUBSCRIPTION_EXPIRED, 0);
             }
             else if (nextPayment != null && nextPayment.isBefore(today)) {
                 long daysOverdue = ChronoUnit.DAYS.between(nextPayment, today);
-                sendNotificationFor(user, sub, NotificationType.PAYMENT_OVERDUE, daysOverdue);
+                if (daysOverdue == 1 || daysOverdue == 3 || daysOverdue == 7) {
+                    sendCategorizedNotification(sub.getUser(), sub, NotificationType.PAYMENT_OVERDUE, daysOverdue);
+                }
             }
-            else if (nextPayment != null && nextPayment.isAfter(today) && nextPayment.isBefore(upcomingLimit)) {
+            else if (nextPayment != null) {
                 long daysUntil = ChronoUnit.DAYS.between(today, nextPayment);
-                if (daysUntil == sub.getNotificationDaysBefore()) {
-                    sendNotificationFor(user, sub, NotificationType.UPCOMING_PAYMENT, daysUntil);
+                if (daysUntil > 0 && daysUntil == sub.getNotificationDaysBefore()) {
+                    sendCategorizedNotification(sub.getUser(), sub, NotificationType.UPCOMING_PAYMENT, daysUntil);
                 }
             }
         }
     }
 
-    private void sendNotificationFor(User user, Subscription sub, NotificationType type, long days) {
+    private void sendCategorizedNotification(User user, Subscription sub, NotificationType type, long days) {
         String title = "";
         String body = "";
 
@@ -67,14 +64,16 @@ public class NotificationScheduleService {
                 break;
             case SUBSCRIPTION_EXPIRED:
                 title = "Abonelik Sona Erdi";
-                body = String.format("'%s' aboneliğinizin süresi doldu. Yenilemek veya kaldırmak için dokunun.", sub.getSubscriptionName());
+                body = String.format("'%s' aboneliğinizin süresi bugün doluyor.", sub.getSubscriptionName());
                 break;
         }
 
-        Map<String, String> data = Map.of(
-                "notificationType", type.name(),
-                "subscriptionId", sub.getId().toString()
+        notificationCreationService.createAndSendNotification(
+                user,
+                title,
+                body,
+                type,
+                sub.getId()
         );
-        fcmService.sendNotificationWithData(user.getFcmToken(), title, body, data);
     }
 }

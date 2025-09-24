@@ -14,6 +14,7 @@ import com.abonex.abonexbackend.repository.VerificationCodeRepository;
 import com.abonex.abonexbackend.service.EmailService;
 import com.abonex.abonexbackend.service.fcm.FCMService;
 import com.abonex.abonexbackend.service.jwt.JwtService;
+import com.abonex.abonexbackend.service.subs.NotificationCreationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -42,6 +43,7 @@ public class AuthService {
     private final VerificationCodeRepository codeRepository;
     private final EmailService emailService;
     private final FCMService fCMService;
+    private final NotificationCreationService notificationCreationService;
 
     public User getAuthenticatedUser() {
         String userEmail = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -70,14 +72,13 @@ public class AuthService {
                 .build();
         User savedUser = userRepository.save(user);
 
-        if (savedUser.getFcmToken() != null && !savedUser.getFcmToken().isBlank()) {
-            fCMService.sendNotificationWithData(
-                    savedUser.getFcmToken(),
-                    "AboneX'e Hoş Geldin!",
-                    "Merhaba " + savedUser.getFirstName() + "! Aboneliklerini yönetmeye başlamak için hazırız.",
-                    Map.of("notificationType", NotificationType.WELCOME_MESSAGE.name())
-                    );
-        }
+        notificationCreationService.createAndSendNotification(
+                user,
+                "Doğrulama Kodu Gönderildi",
+                "Hesabınızı aktifleştirmek için kod e-posta adresinize gönderildi.",
+                NotificationType.ACCOUNT_REACTIVATION_CODE_SENT,
+                null
+        );
 
         String jwtToken = jwtService.generateToken(savedUser);
         return new AuthResponse(jwtToken);
@@ -123,14 +124,13 @@ public class AuthService {
                 .build();
         codeRepository.save(verificationCode);
         emailService.sendVerificationCode(user.getEmail(), code);
-        if (user.getFcmToken() != null) {
-            fCMService.sendNotificationWithData(
-                    user.getFcmToken(),
-                    "Doğrulama kodu gönderildi",
-                    "Hesabınızı aktifleştirmek için kod e-posta adresinize gönderildi.",
-                    Map.of("notificationType", NotificationType.ACCOUNT_REACTIVATION_CODE_SENT.name())
-            );
-        }
+        notificationCreationService.createAndSendNotification(
+                user,
+                "Doğrulama Kodu Gönderildi",
+                "Hesabınızı aktifleştirmek için kod e-posta adresinize gönderildi.",
+                NotificationType.ACCOUNT_REACTIVATION_CODE_SENT,
+                null
+        );
     }
 
     @Transactional
@@ -151,14 +151,13 @@ public class AuthService {
         userRepository.save(user);
         codeRepository.delete(verificationCode);
 
-        if (user.getFcmToken() != null) {
-            fCMService.sendNotificationWithData(
-                    user.getFcmToken(),
-                    "Hesabınız Aktif!",
-                    "Abonex hesabınız başarıyla yeniden aktifleştirildi. Tekrardan hoş geldiniz!",
-                    Map.of("notificationType", NotificationType.ACCOUNT_ACTIVATED.name())
-            );
-        }
+        notificationCreationService.createAndSendNotification(
+                user,
+                "Hesabınız Aktif!",
+                "Abonex hesabınız başarıyla yeniden aktifleştirildi. Tekrardan hoş geldiniz!",
+                NotificationType.ACCOUNT_ACTIVATED,
+                null
+        );
 
         String jwtToken = jwtService.generateToken(user);
         return new AuthResponse(jwtToken);

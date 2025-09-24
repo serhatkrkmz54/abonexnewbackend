@@ -40,6 +40,7 @@ public class SubscriptionService {
     private final SubscriptionPlanRepository planRepository;
     private final PaymentHistoryRepository paymentHistoryRepository;
     private final FCMService fCMService;
+    private final NotificationCreationService notificationCreationService;
 
     public List<Subscription> getUserSubscriptions(User user){
         User authenticatedUser = authService.getAuthenticatedUser();
@@ -192,21 +193,13 @@ public class SubscriptionService {
         subscription.setNextPaymentDate(newNextPaymentDate);
         subscriptionRepository.save(subscription);
 
-        User thisUser = subscription.getUser();
-        if (thisUser.getFcmToken() != null && !thisUser.getFcmToken().isBlank()) {
-            String title = "Ödeme Kaydedildi";
-            String body = String.format(
-                    "'%s' için %.2f %s tutarındaki ödemeniz başarıyla kaydedildi.",
-                    subscription.getSubscriptionName(),
-                    savedPayment.getAmountPaid(),
-                    subscription.getCurrency()
-            );
-            Map<String, String> data = Map.of(
-                    "notificationType", NotificationType.PAYMENT_CONFIRMED.name(),
-                    "subscriptionId", subscription.getId().toString()
-            );
-            fCMService.sendNotificationWithData(user.getFcmToken(), title, body, data);
-        }
+        notificationCreationService.createAndSendNotification(
+                subscription.getUser(),
+                "Ödeme Kaydedildi",
+                String.format("'%s' için ödemeniz başarıyla kaydedildi.", subscription.getSubscriptionName()),
+                NotificationType.PAYMENT_CONFIRMED,
+                subscription.getId()
+        );
         return savedPayment;
     }
 
@@ -267,16 +260,13 @@ public class SubscriptionService {
         subscription.setEndDate(LocalDate.now());
         subscription.setNextPaymentDate(null);
         subscriptionRepository.save(subscription);
-        User thisUser = subscription.getUser();
-        if (thisUser.getFcmToken() != null && !thisUser.getFcmToken().isBlank()) {
-            String title = "Abonelik İptal Edildi";
-            String body = String.format("'%s' aboneliğiniz başarıyla iptal edildi.", subscription.getSubscriptionName());
-            Map<String, String> data = Map.of(
-                    "notificationType", NotificationType.SUBSCRIPTION_CANCELLED.name(),
-                    "subscriptionId", subscription.getId().toString()
-            );
-            fCMService.sendNotificationWithData(user.getFcmToken(), title, body, data);
-        }
+        notificationCreationService.createAndSendNotification(
+                subscription.getUser(),
+                "Abonelik İptal Edildi",
+                String.format("'%s' aboneliğiniz başarıyla iptal edildi.", subscription.getSubscriptionName()),
+                NotificationType.SUBSCRIPTION_CANCELLED,
+                subscription.getId()
+        );
     }
 
 }
