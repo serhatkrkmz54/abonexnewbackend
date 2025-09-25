@@ -3,6 +3,7 @@ target/
 .mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
+src/main/resources/abonex-d8e7e-firebase-adminsdk-*.json
 
 ### STS ###
 .apt_generated
