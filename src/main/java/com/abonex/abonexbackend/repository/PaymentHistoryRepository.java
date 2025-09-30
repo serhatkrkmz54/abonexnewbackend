@@ -12,4 +12,6 @@ public interface PaymentHistoryRepository extends JpaRepository<PaymentHistory, 
     List<PaymentHistory> findBySubscriptionId(Long subscriptionId);
     List<PaymentHistory> findBySubscriptionUserAndPaymentDateBetween(User user, LocalDateTime startDateTime, LocalDateTime endDateTime);
     List<PaymentHistory> findBySubscriptionOrderByPaymentDateDesc(Subscription subscription);
+    List<PaymentHistory> findBySubscriptionUser(User user);
+
 }

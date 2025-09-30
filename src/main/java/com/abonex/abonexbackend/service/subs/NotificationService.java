@@ -22,10 +22,6 @@ public class NotificationService {
     private final NotificationRepository notificationRepository;
     private final AuthService authService;
 
-    /**
-     * Oturum açmış kullanıcının tüm bildirimlerini, en yeniden eskiye doğru listeler.
-     * @return Bildirimlerin DTO listesi.
-     */
     @Transactional(readOnly = true)
     public List<NotificationResponse> getUserNotifications() {
         User user = authService.getAuthenticatedUser();
@@ -35,10 +31,6 @@ public class NotificationService {
                 .collect(Collectors.toList());
     }
 
-    /**
-     * Oturum açmış kullanıcının okunmamış bildirim sayısını döndürür.
-     * @return UnreadCountResponse nesnesi.
-     */
     @Transactional(readOnly = true)
     public UnreadCountResponse getUnreadNotificationCount() {
         User user = authService.getAuthenticatedUser();
@@ -46,10 +38,6 @@ public class NotificationService {
         return new UnreadCountResponse(count);
     }
 
-    /**
-     * ID'si verilen tek bir bildirimi okundu olarak işaretler.
-     * @param notificationId Okundu olarak işaretlenecek bildirimin ID'si.
-     */
     @Transactional
     public void markAsRead(Long notificationId) {
         User user = authService.getAuthenticatedUser();
@@ -64,9 +52,6 @@ public class NotificationService {
         notificationRepository.save(notification);
     }
 
-    /**
-     * Oturum açmış kullanıcının tüm okunmamış bildirimlerini okundu olarak işaretler.
-     */
     @Transactional
     public void markAllAsRead() {
         User user = authService.getAuthenticatedUser();
